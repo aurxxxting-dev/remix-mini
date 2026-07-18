@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld('agnesAPI', {
   setApiType: (type) => ipcRenderer.invoke('set-api-type', type),
   getTokenBalance: () => ipcRenderer.invoke('get-token-balance'),
   getVersion: () => ipcRenderer.invoke('get-version'),
+  checkForUpdate: () => ipcRenderer.invoke('check-for-update'),
+  onUpdateStatus: (callback) => ipcRenderer.on('update-status', (_, msg) => callback(msg)),
   readClipboardText: () => ipcRenderer.invoke('read-clipboard-text'),
   getHistoryImages: () => ipcRenderer.invoke('get-history-images'),
   startDragFile: (filePath) => ipcRenderer.send('start-drag-file', filePath),

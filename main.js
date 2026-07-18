@@ -123,9 +123,21 @@ app.whenReady().then(() => {
 
   autoUpdater.on('update-available', (info) => {
     console.log('Update available:', info.version);
+    if (mainWindow) mainWindow.webContents.send('update-status', '检测到新版本 v' + info.version + '，正在下载...');
+  });
+
+  autoUpdater.on('update-not-available', () => {
+    console.log('No update available');
+    if (mainWindow) mainWindow.webContents.send('update-status', '已是最新版本');
+  });
+
+  autoUpdater.on('download-progress', (progress) => {
+    if (mainWindow) mainWindow.webContents.send('update-status', '下载中: ' + Math.round(progress.percent) + '%');
   });
 
   autoUpdater.on('update-downloaded', (info) => {
+    console.log('Update downloaded:', info.version);
+    if (mainWindow) mainWindow.webContents.send('update-status', '');
     dialog.showMessageBox(mainWindow, {
       type: 'info',
       title: '更新就绪',
@@ -142,9 +154,18 @@ app.whenReady().then(() => {
 
   autoUpdater.on('error', (err) => {
     console.log('Update error:', err.message);
+    if (mainWindow) mainWindow.webContents.send('update-status', '更新检测失败: ' + err.message);
   });
 
   setTimeout(() => autoUpdater.checkForUpdates(), 3000);
+});
+
+ipcMain.handle('check-for-update', async () => {
+  try {
+    await autoUpdater.checkForUpdates();
+  } catch (err) {
+    if (mainWindow) mainWindow.webContents.send('update-status', '检测失败: ' + err.message);
+  }
 });
 app.on('window-all-closed', () => app.quit());
 app.on('activate', () => {

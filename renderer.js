@@ -106,6 +106,23 @@ async function refreshBalance() {
   document.getElementById('versionDisplay').textContent = 'v' + version;
 })();
 
+// Update check button
+document.getElementById('btnCheckUpdate').addEventListener('click', () => {
+  window.agnesAPI.checkForUpdate();
+});
+window.agnesAPI.onUpdateStatus((msg) => {
+  const el = document.getElementById('versionDisplay');
+  if (msg) {
+    el.textContent = msg;
+    el.style.color = 'rgba(0,0,0,0.5)';
+  } else {
+    window.agnesAPI.getVersion().then(v => {
+      el.textContent = 'v' + v;
+      el.style.color = '';
+    });
+  }
+});
+
 function updateApiSelector() {
   apiGemini.classList.toggle('active', currentApiType === 'gemini');
   apiAgnes.classList.toggle('active', currentApiType === 'agnes');

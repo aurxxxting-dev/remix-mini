@@ -50,6 +50,22 @@ body {
   letter-spacing: 0;
 }
 
+.btn-update {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.2);
+  padding: 2px;
+  margin-left: 2px;
+  display: flex;
+  align-items: center;
+  -webkit-app-region: no-drag;
+  transition: color 0.2s;
+}
+.btn-update:hover {
+  color: rgba(0, 0, 0, 0.5);
+}
+
 .content {
   display: flex;
   align-items: center;
