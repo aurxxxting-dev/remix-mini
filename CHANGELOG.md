@@ -13,6 +13,12 @@
 
 ### v1.3.1 - 2026/07/17
 
+#### 新功能
+| 变更 | 说明 |
+|------|------|
+| 版本号显示 | 标题栏右侧显示当前版本号（如 v1.3.1） |
+| GitHub 自动更新 | 启动 3 秒后检测 GitHub Release 新版本，后台静默下载，完成后弹窗提示安装 |
+
 #### 修复
 | 变更 | 说明 |
 |------|------|
@@ -20,11 +26,13 @@
 | 余额显示修正 | 积分 × 1.2 后显示，解决实际余额 16.36 显示为 1.96 的问题 |
 
 #### 技术实现
-- `main.js`: API 响应优先取 `remain_credits`，兼容两种返回格式
-- `renderer.js`: 保持 × 1.2 系数，使用积分基数计算
+- `main.js`: API 响应优先取 `remain_credits`，兼容两种返回格式；集成 `electron-updater` 自动更新
+- `renderer.js`: 保持 × 1.2 系数，使用积分基数计算；加载时显示版本号
+- `preload.js`: 新增 `getVersion` IPC 桥接
+- `package.json`: 新增 `publish` 配置指向 GitHub 仓库
 
 #### 打包产物
-- `Remix Mini Setup 1.3.1.exe` - NSIS 安装包
+- `Remix Mini Setup 1.3.1.exe` - NSIS 安装包（已发布到 GitHub Release）
 
 ---
 
