@@ -436,6 +436,8 @@ ipcMain.handle('set-api-key', (_, key) => {
 
 ipcMain.handle('get-api-type', () => API_TYPE);
 
+ipcMain.handle('get-version', () => app.getVersion());
+
 ipcMain.handle('set-api-type', (_, type) => {
   API_TYPE = type;
   const { API_KEY_FILE: keyFile } = getPaths();

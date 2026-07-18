@@ -98,10 +98,12 @@ async function refreshBalance() {
 (async () => {
   const currentKey = await window.agnesAPI.getApiKey();
   const currentType = await window.agnesAPI.getApiType();
+  const version = await window.agnesAPI.getVersion();
   apiKeyInput.value = currentKey;
   currentApiType = currentType;
   updateApiSelector();
   refreshBalance();
+  document.getElementById('versionDisplay').textContent = 'v' + version;
 })();
 
 function updateApiSelector() {
