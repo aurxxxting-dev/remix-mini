@@ -25,7 +25,9 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "assets/logo.ico"
@@ -36,9 +38,17 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Remix Mini"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "aurxxxting-dev",
+      "repo": "remix-mini"
     }
   },
   "devDependencies": {
     "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }

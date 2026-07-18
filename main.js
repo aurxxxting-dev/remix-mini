@@ -1,7 +1,8 @@
-const { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, nativeImage, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, nativeImage, screen, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
+const { autoUpdater } = require('electron-updater');
 
 app.disableHardwareAcceleration();
 
@@ -115,6 +116,35 @@ app.whenReady().then(() => {
     }
   } catch (_) {}
   createMainWindow();
+
+  // Auto-update
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('update-available', (info) => {
+    console.log('Update available:', info.version);
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: '更新就绪',
+      message: `新版本 v${info.version} 已下载完成`,
+      detail: '点击"立即更新"重启并安装，或稍后自动安装。',
+      buttons: ['立即更新', '稍后'],
+      defaultId: 0,
+    }).then(({ response }) => {
+      if (response === 0) {
+        autoUpdater.quitAndInstall();
+      }
+    });
+  });
+
+  autoUpdater.on('error', (err) => {
+    console.log('Update error:', err.message);
+  });
+
+  setTimeout(() => autoUpdater.checkForUpdates(), 3000);
 });
 app.on('window-all-closed', () => app.quit());
 app.on('activate', () => {
