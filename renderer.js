@@ -76,10 +76,10 @@ async function refreshBalance() {
     const data = await window.agnesAPI.getTokenBalance();
     if (data) {
       if (data.unlimitedQuota) {
-        balanceDisplay.textContent = '余额: ∞';
+        balanceDisplay.textContent = '¥∞';
       } else if (data.balance != null) {
         const num = parseFloat(data.balance);
-        balanceDisplay.textContent = isNaN(num) ? '余额: ' + data.balance : '余额: ' + (num * 1.2).toFixed(2);
+        balanceDisplay.textContent = isNaN(num) ? '¥' + data.balance : '¥' + (num * 1.2).toFixed(2);
       } else {
         balanceDisplay.textContent = '';
         balanceDisplay.style.display = 'none';
