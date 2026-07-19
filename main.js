@@ -117,9 +117,25 @@ app.whenReady().then(() => {
   } catch (_) {}
   createMainWindow();
 
-  // Auto-update
+  // Auto-update - use system proxy for GitHub
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
+
+  // Detect system proxy for update downloads
+  try {
+    const { execSync } = require('child_process');
+    const regResult = execSync('reg query "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /v ProxyEnable', { encoding: 'utf8', timeout: 3000 });
+    const isEnabled = regResult.includes('0x1');
+    if (isEnabled) {
+      const proxyResult = execSync('reg query "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /v ProxyServer', { encoding: 'utf8', timeout: 3000 });
+      const match = proxyResult.match(/ProxyServer\s+REG_SZ\s+(.+)/);
+      if (match) {
+        const proxyUrl = match[1].trim();
+        autoUpdater.netSession.setProxy({ proxyRules: `http://${proxyUrl}` });
+        console.log('Update proxy set:', proxyUrl);
+      }
+    }
+  } catch (_) {}
 
   autoUpdater.on('update-available', (info) => {
     console.log('Update available:', info.version);

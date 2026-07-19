@@ -2,7 +2,7 @@
 
 ## 项目概况
 - **名称**: Remix Mini
-- **版本**: v1.3.5
+- **版本**: v1.3.6
 - **框架**: Electron v28.3.3
 - **模型**: Gemini 3.1 Flash Image Preview / Agnes Image 2.1 Flash
 - **平台**: Windows x64
@@ -10,6 +10,19 @@
 ---
 
 ## 版本历史
+
+### v1.3.6 - 2026/07/19
+
+#### 优化
+| 变更 | 说明 |
+|------|------|
+| 更新源配置 | 自动更新走 GitHub Release，自动检测系统代理 |
+| 体积优化 | 排除源码地图等非必要文件 |
+
+#### 打包产物
+- `Remix Mini Setup 1.3.6.exe` - NSIS 安装包（已发布到 GitHub Release）
+
+---
 
 ### v1.3.5 - 2026/07/17
 
