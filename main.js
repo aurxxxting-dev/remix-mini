@@ -124,7 +124,20 @@ app.whenReady().then(() => {
     try {
       const url = 'https://gitee.com/auerh/remix-mini/raw/main/version.json';
       const data = await new Promise((resolve, reject) => {
-        const req = https.get(url, { timeout: 5000 }, (res) => {
+        const req = https.get(url, { timeout: 8000 }, (res) => {
+          // Follow redirects
+          if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+            const redirectReq = https.get(res.headers.location, { timeout: 8000 }, (redirectRes) => {
+              let body = '';
+              redirectRes.on('data', (c) => body += c);
+              redirectRes.on('end', () => {
+                try { resolve(JSON.parse(body)); } catch (e) { reject(e); }
+              });
+            });
+            redirectReq.on('error', reject);
+            redirectReq.on('timeout', () => { redirectReq.destroy(); reject(new Error('timeout')); });
+            return;
+          }
           let body = '';
           res.on('data', (c) => body += c);
           res.on('end', () => {
@@ -163,7 +176,14 @@ app.whenReady().then(() => {
 ipcMain.handle('check-for-update', () => {
   const currentVersion = app.getVersion();
   const url = 'https://gitee.com/auerh/remix-mini/raw/main/version.json';
-  https.get(url, { timeout: 5000 }, (res) => {
+  
+  function processResponse(res) {
+    if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+      https.get(res.headers.location, { timeout: 8000 }, processResponse).on('error', () => {
+        if (mainWindow) mainWindow.webContents.send('update-status', '检测失败');
+      });
+      return;
+    }
     let body = '';
     res.on('data', (c) => body += c);
     res.on('end', () => {
@@ -188,7 +208,9 @@ ipcMain.handle('check-for-update', () => {
         if (mainWindow) mainWindow.webContents.send('update-status', '检测失败');
       }
     });
-  }).on('error', () => {
+  }
+  
+  https.get(url, { timeout: 8000 }, processResponse).on('error', () => {
     if (mainWindow) mainWindow.webContents.send('update-status', '检测失败');
   });
 });
