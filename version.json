@@ -1,0 +1,5 @@
+{
+  "version": "1.3.7",
+  "changelog": "- 轻量版本检测，弹窗引导下载页\n- 去掉 electron-updater 依赖",
+  "downloadUrl": "https://gitee.com/auerh/remix-mini/releases"
+}

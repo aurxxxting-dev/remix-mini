@@ -2,7 +2,7 @@
 
 ## 项目概况
 - **名称**: Remix Mini
-- **版本**: v1.3.6
+- **版本**: v1.3.7
 - **框架**: Electron v28.3.3
 - **模型**: Gemini 3.1 Flash Image Preview / Agnes Image 2.1 Flash
 - **平台**: Windows x64
@@ -10,6 +10,25 @@
 ---
 
 ## 版本历史
+
+### v1.3.7 - 2026/07/19
+
+#### 重构
+| 变更 | 说明 |
+|------|------|
+| 轻量更新检测 | 去掉 electron-updater，改为读取远程 version.json 比对版本 |
+| 弹窗引导下载 | 发现新版本弹窗提示，点击"前往下载"打开 Gitee Release 页面 |
+| 多软件扩展 | 下载页可承载多个软件的更新下载 |
+
+#### 技术实现
+- `version.json`: 远程版本文件，托管在 Gitee 仓库，修改即发布新版本
+- 检测逻辑: HTTPS GET → JSON 解析 → 版本比对 → 弹窗 + 外链
+- 去除 `electron-updater` 依赖，减少包体积
+
+#### 打包产物
+- `Remix Mini Setup 1.3.7.exe` - NSIS 安装包
+
+---
 
 ### v1.3.6 - 2026/07/19
 

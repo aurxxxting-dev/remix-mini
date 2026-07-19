@@ -1,8 +1,7 @@
-const { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, nativeImage, screen, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, desktopCapturer, clipboard, nativeImage, screen, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
-const { autoUpdater } = require('electron-updater');
 
 app.disableHardwareAcceleration();
 
@@ -117,71 +116,81 @@ app.whenReady().then(() => {
   } catch (_) {}
   createMainWindow();
 
-  // Auto-update - use system proxy for GitHub
-  autoUpdater.autoDownload = true;
-  autoUpdater.autoInstallOnAppQuit = true;
+  // Lightweight update check - fetch remote version info
+  const DOWNLOAD_PAGE = 'https://gitee.com/auerh/remix-mini/releases';
+  const currentVersion = app.getVersion();
 
-  // Detect system proxy for update downloads
-  try {
-    const { execSync } = require('child_process');
-    const regResult = execSync('reg query "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /v ProxyEnable', { encoding: 'utf8', timeout: 3000 });
-    const isEnabled = regResult.includes('0x1');
-    if (isEnabled) {
-      const proxyResult = execSync('reg query "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings" /v ProxyServer', { encoding: 'utf8', timeout: 3000 });
-      const match = proxyResult.match(/ProxyServer\s+REG_SZ\s+(.+)/);
-      if (match) {
-        const proxyUrl = match[1].trim();
-        autoUpdater.netSession.setProxy({ proxyRules: `http://${proxyUrl}` });
-        console.log('Update proxy set:', proxyUrl);
+  async function checkForUpdate() {
+    try {
+      const url = 'https://gitee.com/auerh/remix-mini/raw/main/version.json';
+      const data = await new Promise((resolve, reject) => {
+        const req = https.get(url, { timeout: 5000 }, (res) => {
+          let body = '';
+          res.on('data', (c) => body += c);
+          res.on('end', () => {
+            try { resolve(JSON.parse(body)); } catch (e) { reject(e); }
+          });
+        });
+        req.on('error', reject);
+        req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+      });
+
+      if (data.version && data.version !== currentVersion) {
+        if (mainWindow) mainWindow.webContents.send('update-status', '发现新版本 v' + data.version);
+        const { response } = await dialog.showMessageBox(mainWindow, {
+          type: 'info',
+          title: '发现新版本',
+          message: `新版本 v${data.version} 已发布`,
+          detail: data.changelog || '点击"前往下载"获取最新版本。',
+          buttons: ['前往下载', '稍后'],
+          defaultId: 0,
+        });
+        if (response === 0) {
+          shell.openExternal(data.downloadUrl || DOWNLOAD_PAGE);
+        }
+      } else {
+        if (mainWindow) mainWindow.webContents.send('update-status', '已是最新版本');
       }
+    } catch (err) {
+      console.log('Update check failed:', err.message);
+      if (mainWindow) mainWindow.webContents.send('update-status', '检测失败');
     }
-  } catch (_) {}
+  }
 
-  autoUpdater.on('update-available', (info) => {
-    console.log('Update available:', info.version);
-    if (mainWindow) mainWindow.webContents.send('update-status', '检测到新版本 v' + info.version + '，正在下载...');
-  });
-
-  autoUpdater.on('update-not-available', () => {
-    console.log('No update available');
-    if (mainWindow) mainWindow.webContents.send('update-status', '已是最新版本');
-  });
-
-  autoUpdater.on('download-progress', (progress) => {
-    if (mainWindow) mainWindow.webContents.send('update-status', '下载中: ' + Math.round(progress.percent) + '%');
-  });
-
-  autoUpdater.on('update-downloaded', (info) => {
-    console.log('Update downloaded:', info.version);
-    if (mainWindow) mainWindow.webContents.send('update-status', '');
-    dialog.showMessageBox(mainWindow, {
-      type: 'info',
-      title: '更新就绪',
-      message: `新版本 v${info.version} 已下载完成`,
-      detail: '点击"立即更新"重启并安装，或稍后自动安装。',
-      buttons: ['立即更新', '稍后'],
-      defaultId: 0,
-    }).then(({ response }) => {
-      if (response === 0) {
-        autoUpdater.quitAndInstall();
-      }
-    });
-  });
-
-  autoUpdater.on('error', (err) => {
-    console.log('Update error:', err.message);
-    if (mainWindow) mainWindow.webContents.send('update-status', '更新检测失败: ' + err.message);
-  });
-
-  setTimeout(() => autoUpdater.checkForUpdates(), 3000);
+  setTimeout(checkForUpdate, 3000);
 });
 
-ipcMain.handle('check-for-update', async () => {
-  try {
-    await autoUpdater.checkForUpdates();
-  } catch (err) {
-    if (mainWindow) mainWindow.webContents.send('update-status', '检测失败: ' + err.message);
-  }
+ipcMain.handle('check-for-update', () => {
+  const currentVersion = app.getVersion();
+  const url = 'https://gitee.com/auerh/remix-mini/raw/main/version.json';
+  https.get(url, { timeout: 5000 }, (res) => {
+    let body = '';
+    res.on('data', (c) => body += c);
+    res.on('end', () => {
+      try {
+        const data = JSON.parse(body);
+        if (data.version && data.version !== currentVersion) {
+          if (mainWindow) mainWindow.webContents.send('update-status', '发现新版本 v' + data.version);
+          dialog.showMessageBox(mainWindow, {
+            type: 'info',
+            title: '发现新版本',
+            message: `新版本 v${data.version} 已发布`,
+            detail: data.changelog || '点击"前往下载"获取最新版本。',
+            buttons: ['前往下载', '稍后'],
+            defaultId: 0,
+          }).then(({ response }) => {
+            if (response === 0) shell.openExternal(data.downloadUrl || 'https://gitee.com/auerh/remix-mini/releases');
+          });
+        } else {
+          if (mainWindow) mainWindow.webContents.send('update-status', '已是最新版本');
+        }
+      } catch (_) {
+        if (mainWindow) mainWindow.webContents.send('update-status', '检测失败');
+      }
+    });
+  }).on('error', () => {
+    if (mainWindow) mainWindow.webContents.send('update-status', '检测失败');
+  });
 });
 app.on('window-all-closed', () => app.quit());
 app.on('activate', () => {
